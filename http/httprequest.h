@@ -24,7 +24,6 @@
 #include <mutex>
 #include <iostream>
 #include <fstream>
-#include <boost/asio/ssl.hpp>
 #include <boost/bind.hpp>
 
 using namespace boost;
@@ -58,13 +57,13 @@ public:
 private:
     asio::streambuf& get_response_buf();
 
-    void set_status_code(unsigned int status_code);
+    void set_status_code(unsigned long status_code);
 
     void set_status_message(const std::string& status_message);
 
     void add_header(const std::string& name, const std::string& value);
 private:
-    unsigned int m_status_code; // HTTP status code.
+    unsigned long m_status_code; // HTTP status code.
     std::string m_status_message; // HTTP status message.
 
     // Response headers.
@@ -76,8 +75,6 @@ private:
  * \brief Базовый класс HTTPRequest
  * \details Используется для установления HTTPS соединения и
  *          асинхронной передачи запроса
- * \warning В текущей версии (сентябрь 2017) жётско прописан
- *          путь к сертификату SSL
  */
 class HTTPRequest : public QObject
 {
@@ -90,21 +87,11 @@ protected:
     HTTPRequest(asio::io_service& ios, unsigned int id) :
         m_port(DEFAULT_PORT),
         m_id(id),
-        m_ctx(asio::ssl::context::sslv23),
-        m_sock(ios, m_ctx),
+        m_sock(ios),
         m_resolver(ios),
         m_was_cancelled(false),
         m_ios(ios)
-    {
-        m_ctx.load_verify_file("../certs/EvilEmpireEngine.pem");
-        m_sock.set_verify_mode(asio::ssl::verify_peer);
-
-        m_sock.set_verify_callback([this](
-            bool preverified,
-            asio::ssl::verify_context& context)->bool{
-            return on_peer_verify(preverified, context);
-        });
-    }
+    {}
 
 public:
     void set_host(const std::string& host);
@@ -126,12 +113,8 @@ signals:
 
 protected:
 
-    bool on_peer_verify(bool preverified, asio::ssl::verify_context& context);
-
     void on_host_name_resolved(const boost::system::error_code& ec,
                                asio::ip::tcp::resolver::iterator iterator);
-
-    void on_handshake_complete(const boost::system::error_code& ec);
 
     /// Виртуальная функция, отвечающая за формирование запроса
     /// реализуется в дочерних классах
@@ -169,8 +152,7 @@ protected:
 
     std::string m_request_buf;
 
-    asio::ssl::context m_ctx;
-    asio::ssl::stream<asio::ip::tcp::socket> m_sock;
+    asio::ip::tcp::socket m_sock;
     asio::ip::tcp::resolver m_resolver;
 
 

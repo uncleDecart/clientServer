@@ -29,7 +29,7 @@ void FileSender::parse_get(const HTTPRequest &request,
                            const HTTPResponse &response,
                            const system::error_code &ec)
 {
-    if (ec == 0 || ec.category() == asio::error::get_ssl_category())
+    if (ec == 0) // || ec.category() == asio::error::get_ssl_category()
     {
         // TODO: обработать ошибки SSL
         std::cout << "RECEIVE : " << response.get_status_message() << std::endl;
@@ -141,7 +141,6 @@ int FileSender::start_session()
 
         std::unique_ptr<HTTPGETRequest> request_one =
                 client.create_get_request(1);
-
         request_one->set_host(m_hostname);
         request_one->set_uri(m_id + "/any?" + std::to_string(m_chunk_counter));
         request_one->set_port(m_port);

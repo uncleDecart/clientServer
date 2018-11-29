@@ -76,7 +76,7 @@ using namespace boost;
         return m_response_buf;
     }
 
-    void HTTPResponse::set_status_code(unsigned int status_code) {
+    void HTTPResponse::set_status_code(unsigned long status_code) {
         m_status_code = status_code;
     }
 
@@ -117,55 +117,6 @@ using namespace boost;
     unsigned int HTTPRequest::get_id() const {
         return m_id;
     }
-
-    /*!
-     * \brief HTTPRequest::on_peer_verify
-     * Проверяет валидность сертификата
-     * \details Вызывается во время установления TLS/SSL соединения
-     * функцией async_handshake из функции on_connection_established
-     * \param preverified см. стандарт проверки
-     * \param ctx сертификат
-     * \return
-     */
-    bool HTTPRequest::on_peer_verify(bool preverified, asio::ssl::verify_context& ctx)
-    {
-        int8_t subject_name[256];
-        X509_STORE_CTX *cts = ctx.native_handle();
-
-        X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-        std::cout << "CTX ERROR : " << cts->error << std::endl;
-
-        int32_t depth = X509_STORE_CTX_get_error_depth(cts);
-        std::cout << "CTX DEPTH : " << depth << std::endl;
-
-        switch (cts->error)
-        {
-        case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-            std::cout << "X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT" << std::endl;
-            break;
-        case X509_V_ERR_CERT_NOT_YET_VALID:
-        case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-            std::cout << "Certificate not yet valid!!" << std::endl;
-            break;
-        case X509_V_ERR_CERT_HAS_EXPIRED:
-        case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-            std::cout << "Certificate expired.." << std::endl;
-            break;
-        case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-            std::cout <<  "Self signed certificate in chain!!!\n" << std::endl;
-            preverified = true;
-            break;
-        default:
-            break;
-        }
-        const int32_t name_length = 256;
-        X509_NAME_oneline(X509_get_subject_name(cert), reinterpret_cast<char*>(subject_name), name_length);
-        std::cout << "Verifying " << subject_name << std::endl;
-        std::cout << "Verification status : " << preverified << std::endl;
-
-        return preverified;
-    }
-
     /*!
      * \brief HTTPRequest::execute
      * Проверяется правильность данных, используемых для соединения
@@ -212,8 +163,8 @@ using namespace boost;
 
         m_resolver.cancel();
 
-        if (m_sock.lowest_layer().is_open()) {
-            m_sock.lowest_layer().cancel();
+        if (m_sock.is_open()) {
+            m_sock.cancel();
         }
     }
 
@@ -233,7 +184,7 @@ using namespace boost;
         const boost::system::error_code& ec,
         asio::ip::tcp::resolver::iterator iterator)
     {
-        if (ec != 0) {
+        if (ec != nullptr) {
             on_finish(ec);
             return;
         }
@@ -263,10 +214,7 @@ using namespace boost;
      * Вызывается после установления соединения функцией
      * on_host_name_resolved
      * \details
-     * Осуществляет рукопожатие SSL/TLS.
-     * Во время рукопожатия вызывается функция
-     * on_peer_verify
-     * Далее управление передаётся функции
+     * Управление передаётся функции
      * on_handshake_complete
      * \param ec
      * \param iterator
@@ -275,57 +223,30 @@ using namespace boost;
         const boost::system::error_code& ec,
         asio::ip::tcp::resolver::iterator iterator)
     {
-            if (ec != 0)
-            {
-                on_finish(ec);
-                return;
-            }
-            m_sock.async_handshake(asio::ssl::stream_base::client,
-                                   boost::bind(&HTTPRequest::on_handshake_complete, this,
-                                               asio::placeholders::error));
-    }
-
-    /*!
-     * \brief HTTPRequest::on_handshake_complete
-     * Вызывается после успешного рукопожатия, выполненного функцией
-     * on_connection_established
-     * \details
-     * Компанует искомый {GET, POST} запрос и отправляет его на хост
-     * После этого управление передаётся функции
-     * on_request_sent
-     * \param ec
-     */
-    void HTTPRequest::on_handshake_complete(
-        const boost::system::error_code& ec)
-    {
-        std::cout << "handshake complete" << std::endl;
-
-            if (ec != 0)
+            if (ec != nullptr)
             {
                 on_finish(ec);
                 return;
             }
 
-            // Compose the request message.
             compose_request();
 
-            std::unique_lock<std::mutex>
-                cancel_lock(m_cancel_mux);
+            std::unique_lock<std::mutex> cancel_lock(m_cancel_mux);
 
-            if (m_was_cancelled) {
+            if (m_was_cancelled)
+            {
                 cancel_lock.unlock();
                 on_finish(boost::system::error_code(
-                    asio::error::operation_aborted));
+                              asio::error::operation_aborted));
                 return;
             }
 
-            // Send the request message.
             asio::async_write(m_sock,
-                asio::buffer(m_request_buf),
-                [this](const boost::system::error_code& ec,
-                std::size_t bytes_transferred)
+                              asio::buffer(m_request_buf),
+                              [this](const boost::system::error_code& ec,
+                              std::size_t bytes_transfered)
             {
-                on_request_sent(ec, bytes_transferred);
+                on_request_sent(ec, bytes_transfered);
             });
     }
 
@@ -345,7 +266,7 @@ using namespace boost;
     {
         std::cout << "request sent" << std::endl;
 
-            if (ec != 0)
+            if (ec != nullptr)
             {
                 on_finish(ec);
                 return;
@@ -391,9 +312,7 @@ using namespace boost;
         const boost::system::error_code& ec,
         std::size_t bytes_transferred)
     {
-        std::cout << "status line received" << std::endl;
-
-            if (ec != 0)
+            if (ec != nullptr)
             {
                 on_finish(ec);
                 return;
@@ -418,7 +337,7 @@ using namespace boost;
             response_stream >> str_status_code;
 
             // Convert status code to integer.
-            unsigned int status_code = 200;
+            unsigned long status_code = 200;
 
             try
             {
@@ -476,9 +395,7 @@ using namespace boost;
     void HTTPRequest::on_headers_received(const boost::system::error_code& ec,
                                           std::size_t bytes_transferred)
     {
-        std::cout << "headers received" << std::endl;
-
-        if (ec != 0)
+        if (ec != nullptr)
         {
             on_finish(ec);
             return;
@@ -552,8 +469,6 @@ using namespace boost;
         const boost::system::error_code& ec,
         std::size_t bytes_transferred)
     {
-        std::cout << "response body received" << std::endl;
-
         if (ec == asio::error::eof)
             on_finish(boost::system::error_code());
         else
@@ -568,7 +483,7 @@ using namespace boost;
      */
     void HTTPRequest::on_finish(const boost::system::error_code& ec)
     {
-        if (ec != 0) {
+        if (ec != nullptr) {
             std::cout << "Error occured! Error code = "
                 << ec.value()
                 << ". Message: " << ec.message() << std::endl;

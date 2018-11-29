@@ -6,7 +6,6 @@ HTTPGETRequest::HTTPGETRequest(asio::io_service& ios, unsigned int id) :
     HTTPRequest(ios, id),
     m_message(DEFAULT_MESSAGE)
 {
-
 }
 
 void HTTPGETRequest::set_message(std::__cxx11::string message) {

@@ -18,6 +18,7 @@ class MyServer(BaseHTTPRequestHandler):
     
     #	GET is for clients geting the predi
     def do_GET(self):
+        print("Incomming HTTP GET for {0}".format(self.path))
         if re.search(r'\d+', self.path).group() in validIds:
             directory = os.path.dirname(self.path)
             ans = ""
