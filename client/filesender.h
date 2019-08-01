@@ -4,13 +4,13 @@
 #include <QObject>
 
 #include "fileparser.h"
-#include "httpclient.h"
+#include "../http/httpclient.h"
 
 class FileSender : public QObject
 {
     Q_OBJECT
 
-    const int DEFAULT_CHUNK_COUNTER = 4;
+    const int DEFAULT_CHUNK_COUNTER = 1;
     const int DEFAULT_PORT = 3333;
     const std::string DEFAULT_HOSTNAME = "home.eee";
 public:

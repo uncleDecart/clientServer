@@ -1,6 +1,4 @@
 #include "httprequest.h"
-#include "fileparser.h"
-
 
 namespace http_errors {
     enum http_error_codes
@@ -100,6 +98,10 @@ using namespace boost;
 
     void HTTPRequest::set_uri(const std::string& uri) {
         m_uri = uri;
+    }
+
+    void HTTPRequest::set_callback(Callback callback) {
+        m_callback = callback;
     }
 
     std::string HTTPRequest::get_host() const {
@@ -488,7 +490,8 @@ using namespace boost;
                 << ec.value()
                 << ". Message: " << ec.message() << std::endl;
         }
-        emit got_response(*this, m_response, ec);
+
+        m_callback(*this, m_response, ec);
 
         return;
     }

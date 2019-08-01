@@ -19,8 +19,6 @@
 
 #include <boost/asio.hpp>
 
-#include <QObject>
-
 #include <mutex>
 #include <iostream>
 #include <fstream>
@@ -32,6 +30,10 @@ class HTTPClient;
 class HTTPRequest;
 class HTTPResponse;
 
+typedef  void(*Callback) (const HTTPRequest& request,
+                          const HTTPResponse& response,
+                          const system::error_code& ec);
+
 /*!
  * \brief Класс HTTPResponse.
  * Порождается только классом HTTPRequest.
@@ -41,9 +43,12 @@ class HTTPResponse;
 class HTTPResponse
 {
     friend class HTTPRequest;
+    friend class HTPPServer;
+
     HTTPResponse() :
         m_response_stream(&m_response_buf)
     {}
+
 public:
 
     unsigned int get_status_code() const;
@@ -76,9 +81,8 @@ private:
  * \details Используется для установления HTTPS соединения и
  *          асинхронной передачи запроса
  */
-class HTTPRequest : public QObject
+class HTTPRequest
 {
-    Q_OBJECT
 
 protected:
 
@@ -97,6 +101,7 @@ public:
     void set_host(const std::string& host);
     void set_port(unsigned int port);
     void set_uri(const std::string& uri);
+    void set_callback(Callback callback);
 
     std::string get_host() const;
     unsigned int get_port() const;
@@ -105,11 +110,6 @@ public:
 
     void execute();
     void cancel();
-
-signals:
-    void got_response(const HTTPRequest& request,
-                      const HTTPResponse& response,
-                      const system::error_code& ec);
 
 protected:
 
@@ -155,6 +155,7 @@ protected:
     asio::ip::tcp::socket m_sock;
     asio::ip::tcp::resolver m_resolver;
 
+    Callback m_callback;
 
     HTTPResponse m_response;
 

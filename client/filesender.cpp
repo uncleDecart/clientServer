@@ -29,27 +29,26 @@ void FileSender::parse_get(const HTTPRequest &request,
                            const HTTPResponse &response,
                            const system::error_code &ec)
 {
-    if (ec == 0) // || ec.category() == asio::error::get_ssl_category()
+    if (ec == nullptr) // || ec.category() == asio::error::get_ssl_category()
     {
         // TODO: обработать ошибки SSL
         std::cout << "RECEIVE : " << response.get_status_message() << std::endl;
+        if (response.get_status_code() == 404)
+        {
+            for (int i = 0; i < m_chunk_counter; i++)
+                send_file(m_file_parser.get_compressed_chunk(i));
+        }
         if (response.get_status_code() == 200)
         {
-            if (response.get_status_message() == " NONE")
-                for (int i = 0; i < m_chunk_counter; i++)
-                    send_file(m_file_parser.get_compressed_chunk(i));
-            else
-            {
-                std::vector<std::string> resp;
-                boost::split(resp, response.get_status_message(), boost::is_any_of(" "));
-                int chunk_count = std::stoi(resp.back());
-                resp.pop_back();
+            std::vector<std::string> resp;
+            boost::split(resp, response.get_status_message(), boost::is_any_of(" "));
+            int chunk_count = std::stoi(resp.back());
+            resp.pop_back();
 
-                std::vector<std::string> missing_files = m_file_parser.get_missing_files(chunk_count, resp);
+            std::vector<std::string> missing_files = m_file_parser.get_missing_files(chunk_count, resp);
 
-                for (auto it = missing_files.begin(); it < missing_files.end(); it++)
-                    send_file(*it);
-            }
+            for (auto it = missing_files.begin(); it < missing_files.end(); it++)
+                send_file(*it);
         }
         if (response.get_status_code() == 403)
         {
@@ -78,7 +77,7 @@ void FileSender::parse_post(const HTTPRequest &request,
                            const HTTPResponse &response,
                            const system::error_code &ec)
 {
-    if (ec == 0)
+    if (ec == nullptr)
     {
         std::cout << "Request #" << request.get_id()
             << " has completed. Response: "

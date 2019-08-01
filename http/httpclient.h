@@ -1,8 +1,8 @@
 #ifndef HTTPCLIENT_H
 #define HTTPCLIENT_H
 
-#include "../http/httppostrequest.h"
-#include "../http/httpgetrequest.h"
+#include "httppostrequest.h"
+#include "httpgetrequest.h"
 #include <thread>
 #include <memory>
 

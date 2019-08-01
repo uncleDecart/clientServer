@@ -24,7 +24,11 @@ SOURCES += \
         main.cpp \
     acceptor.cpp \
     server.cpp \
-    service.cpp
+    service.cpp \
+    ../http/httpgetrequest.cpp \
+    ../http/httppostrequest.cpp \
+    ../http/httprequest.cpp \
+    ../http/httpserver.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -34,4 +38,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     acceptor.h \
     server.h \
-    service.h
+    service.h \
+    ../http/httpgetrequest.h \
+    ../http/httppostrequest.h \
+    ../http/httprequest.h \
+    ../http/httpserver.h

@@ -28,8 +28,8 @@ void Acceptor::InitAccept()
 void Acceptor::onAccept(const::boost::system::error_code&ec,
                         std::shared_ptr<asio::ip::tcp::socket> sock)
 {
-    if (ec == 0) {
-        (new Service(sock))->StartHandling();
+    if (ec == nullptr) {
+        (new Service(sock))->start_handling();
     }
     else {
         std::cout << "Error occured! Error code = "

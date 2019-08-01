@@ -1,35 +1,10 @@
-//#include "tst_filesender.h"
-//QTEST_MAIN(TestFileSender)
-
-#include <fstream>
-#include "filesender.h"
-
-/*!
- * \mainpage main
- * \section intro_sec Алгоритм работы
- *
- *  Устанавливает соединение с сервером,
- *  передаёт GET-запрос на существование
- *  уже переданных частей файла, на случай
- *  обрыва в предыдущие сессии.
- *  Если частей не было найдено, то исходный
- *  файл разбивается на части, они [части]
- *  сжимаются и асинхроно передаются на сервер.
- *  В противном случае, неотправленные в
- *  предыдущую сессию файлы отправляются.
- * \bug
- * POST запрос завершается ошибкой SHORT READ
- * Проблема в завершении SSL/TLS соединении,
- * на передачу файлов не влияет.
- * \warning
- * В текущей версии сервер не сохраняет количество
- * клиентом чанков и считает его равным 4.
- */
+#include "recorder.h"
+#include <cstdlib>
 
 int main(int argc, char** argv)
 {
-    FileSender fs("input.dat", "123");
-    fs.start_session();
-
+    Recorder r;
+    r.record_audio();
+    r.send_recording("");
     return 0;
 }

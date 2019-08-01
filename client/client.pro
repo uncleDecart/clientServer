@@ -9,7 +9,8 @@ LIBS += -lboost_system \
         -lpthread \
         -lboost_iostreams \
         -lboost_filesystem \
-        -lboost_regex
+        -lboost_regex \
+        -lasound
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -24,13 +25,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    fileparser.cpp \
-    filesender.cpp \
-    httpclient.cpp \
+    ../http/httpclient.cpp \
     ../http/httpgetrequest.cpp \
     ../http/httppostrequest.cpp \
     ../http/httprequest.cpp \
-    tst_filesender.cpp
+    recorder.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -38,10 +37,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    fileparser.h \
-    filesender.h \
-    httpclient.h \
+    ../http/httpclient.h \
     ../http/httpgetrequest.h \
     ../http/httppostrequest.h \
     ../http/httprequest.h \
-    tst_filesender.h
+    recorder.h

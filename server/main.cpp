@@ -16,7 +16,7 @@ int main()
 
         srv.Start(port_num, thread_pool_size);
 
-        std::this_thread::sleep_for(std::chrono::seconds(60));
+        std::this_thread::sleep_for(std::chrono::seconds(180));
 
         srv.Stop();
     }
